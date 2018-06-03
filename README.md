@@ -1,2 +1,2 @@
 # fresa
-IoT h-da group project 
+Prototye scripts for a IoT h-da group project 
