@@ -50,7 +50,6 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
-
 void setup_wifi()
 {
 
@@ -76,6 +75,17 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
+void lockControl(String status)
+{
+  if (status == "open")
+  {
+    Serial.println("unlocked");
+    digitalWrite(BUILTIN_LED, HIGH); // Turn the LED on by making the voltage HIGH
+    delay(2000);
+    digitalWrite(BUILTIN_LED, LOW); // Turn the LED off
+  }
+}
+
 void callback(char *topic, byte *payload, unsigned int length)
 {
   Serial.print("Message arrived [");
@@ -85,18 +95,13 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     Serial.print((char)payload[i]);
   }
+  payload[length] = '\0';
+  String message = String((char *)payload);
   Serial.println();
 
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1')
+  if (message == "open lock")
   {
-    digitalWrite(BUILTIN_LED, LOW); // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is acive low on the ESP-01)
-  }
-  else
-  {
-    digitalWrite(BUILTIN_LED, HIGH); // Turn the LED off by making the voltage HIGH
+    lockControl("open");
   }
 }
 
@@ -114,7 +119,7 @@ void reconnect()
     {
       Serial.println("connected");
       // ... and resubscribe
-      client.subscribe("mini/0");
+      client.subscribe(fresaClient);
     }
     else
     {

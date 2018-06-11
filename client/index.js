@@ -22,6 +22,11 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/qr', function (req, res) {
+  res.sendFile(__dirname + '/qr/index.html');
+});
+
+
 
 io.on('connection', function (socket) {
   var client = mqtt.connect(host, options)
@@ -36,6 +41,10 @@ io.on('connection', function (socket) {
   socket.on('disconnect', function () {
     console.log('user disconnected');
   });
+
+  socket.on('open lock', function (msg) {
+    client.publish(msg, "open lock")
+  })
 
   client.on('message', function (topic, message) {
     // message is Buffer
