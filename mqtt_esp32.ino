@@ -34,8 +34,11 @@
 const char *ssid = "CartoonNetwork";
 const char *password = "SPJ2017krda78";
 const char *mqtt_server = "m21.cloudmqtt.com";
+const char *fresaClient = "mini/0";
 const char *user = "ixysflsb";
 const char *pass = "yqVLDBTa3h1c";
+const char *willTopic = fresaClient;
+const char *willMsg = "disconnect";
 
 constexpr uint8_t RST_PIN = 21; // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
@@ -107,7 +110,7 @@ void reconnect()
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str(), user, pass))
+    if (client.connect(clientId.c_str(), user, pass, willTopic, 2, 1, willMsg))
     {
       Serial.println("connected");
       // ... and resubscribe
@@ -259,12 +262,12 @@ void loop()
     snprintf(msg, 75, "open");
     Serial.print("Publish message: ");
     Serial.println(msg);
-    client.publish("mini/0", msg, true);
+    client.publish(fresaClient, msg, true);
     delay(10000);
     snprintf(msg, 75, "closed");
     Serial.print("Publish message: ");
     Serial.println(msg);
-    client.publish("mini/0", msg, true);
+    client.publish(fresaClient, msg, true);
   }
 
   rfid();
