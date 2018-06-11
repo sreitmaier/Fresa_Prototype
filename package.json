@@ -1,0 +1,19 @@
+{
+  "name": "fresa_prototype",
+  "version": "1.0.0",
+  "description": "Prototye scripts for a IoT h-da group project",
+  "main": "client/index.js",
+  "scripts": {
+    "start": "cd client && node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://janmei@github.com/sreitmaier/fresa_prototype.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sreitmaier/fresa_prototype/issues"
+  },
+  "homepage": "https://github.com/sreitmaier/fresa_prototype#readme"
+}

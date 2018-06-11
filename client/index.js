@@ -41,6 +41,8 @@ io.on('connection', function (socket) {
     // message is Buffer
     // console.log(message.toString())
     // console.log(topic.toString())
+
+    // get Number from Topic
     var slashReg = new RegExp("([^\/]+$)")
     var num = slashReg.exec(topic);
     num = num[0]
