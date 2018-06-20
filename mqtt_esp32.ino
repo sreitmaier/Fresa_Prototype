@@ -43,6 +43,8 @@ const char *willMsg = "disconnect";
 constexpr uint8_t RST_PIN = 21; // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
 
+const int LOCK_PIN = 15;
+
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 WiFiClient espClient;
@@ -80,6 +82,39 @@ void lockControl(String status)
   if (status == "open")
   {
     Serial.println("unlocked");
+
+    // Open Lock
+    digitalWrite(LOCK_PIN, HIGH);
+    delay(200);
+    digitalWrite(LOCK_PIN, LOW);
+    mqttOpen();
+    ledControl("open");
+  }
+}
+
+void mqttOpen()
+{
+  // send OPEN message to mqtt server
+  snprintf(msg, 75, "open");
+  Serial.print("Publish message: ");
+  Serial.println(msg);
+  client.publish(fresaClient, msg, true);
+}
+
+void mqttClose()
+{
+  // send OPEN message to mqtt server
+  snprintf(msg, 75, "close");
+  Serial.print("Publish message: ");
+  Serial.println(msg);
+  client.publish(fresaClient, msg, true);
+}
+
+void ledControl(String status)
+{
+  if (status == "open")
+  {
+    Serial.println("leds green");
     digitalWrite(BUILTIN_LED, HIGH); // Turn the LED on by making the voltage HIGH
     delay(2000);
     digitalWrite(BUILTIN_LED, LOW); // Turn the LED off
@@ -232,6 +267,7 @@ void rfid()
   //----------------------------------------
 
   Serial.println(F("\n**End Reading**\n"));
+  lockControl("open");
 
   delay(1000); //change value if you want to read cards faster
 
@@ -242,6 +278,7 @@ void rfid()
 void setup()
 {
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
+  pinMode(LOCK_PIN, OUTPUT);
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 18990);
@@ -249,6 +286,7 @@ void setup()
   SPI.begin();                                               // Init SPI bus
   mfrc522.PCD_Init();                                        // Init MFRC522 card
   Serial.println(F("Read personal data on a MIFARE PICC:")); //shows in serial that it is ready to read
+  Serial.println(F("Ready!"));                               //shows in serial that it is ready to read
 }
 
 void loop()
@@ -259,21 +297,6 @@ void loop()
     reconnect();
   }
   client.loop();
-
-  long now = millis();
-  if (now - lastMsg > 20000)
-  {
-    lastMsg = now;
-    snprintf(msg, 75, "open");
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish(fresaClient, msg, true);
-    delay(10000);
-    snprintf(msg, 75, "closed");
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish(fresaClient, msg, true);
-  }
 
   rfid();
 }
