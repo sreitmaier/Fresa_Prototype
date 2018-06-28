@@ -3,7 +3,10 @@ var fs = require('fs');
 var fileName = './static/stations.json';
 var file = require(fileName);
 
-
+const accountSid = 'ACdcbcf7a28edb77afa1f374d1baf5a2d6';
+const authToken = '9c887f15a2f4ecc090e662071ab7caee';
+const twilio = require('twilio')(accountSid, authToken);
+var smsTest = false;
 
 var host = "mqtt://m21.cloudmqtt.com:18990"
 var options = {
@@ -46,6 +49,20 @@ io.on('connection', function (socket) {
     client.publish(msg, "open lock")
   })
 
+  socket.on('locked', function (msg) {
+    client.publish(msg, "loaded");
+    if (smsTest) {
+      twilio.messages
+        .create({
+          body: 'Deine Bestellung wurde gerade abgegeben. Hole sie mit deiner Mitgliedskarte ab. Viel Spaß beim auspacken.',
+          from: '+4915735993212',
+          to: '+4915788718202'
+        })
+        .then(message => console.log(message.sid))
+        .done();
+    }
+  })
+
   client.on('message', function (topic, message) {
     // message is Buffer
     // console.log(message.toString())
@@ -71,6 +88,6 @@ io.on('connection', function (socket) {
 });
 
 
-http.listen(3000, function () {
+http.listen(3001, function () {
   console.log('listening on http://localhost:3000');
 });

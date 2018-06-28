@@ -31,8 +31,8 @@
 
 // Update these with values suitable for your network.
 
-const char *ssid = "CartoonNetwork";
-const char *password = "SPJ2017krda78";
+const char *ssid = "...";
+const char *password = "MeinIMDinDieburg";
 const char *mqtt_server = "m21.cloudmqtt.com";
 const char *fresaClient = "mini/0";
 const char *user = "ixysflsb";
@@ -80,6 +80,12 @@ void lockControl(String status)
   if (status == "open")
   {
     Serial.println("unlocked");
+
+    pinMode(15, OUTPUT);
+    digitalWrite(15, HIGH);
+    delay(100);
+    digitalWrite(15, LOW);
+
     digitalWrite(BUILTIN_LED, HIGH); // Turn the LED on by making the voltage HIGH
     delay(2000);
     digitalWrite(BUILTIN_LED, LOW); // Turn the LED off
@@ -249,6 +255,8 @@ void setup()
   SPI.begin();                                               // Init SPI bus
   mfrc522.PCD_Init();                                        // Init MFRC522 card
   Serial.println(F("Read personal data on a MIFARE PICC:")); //shows in serial that it is ready to read
+  pinMode(27, OUTPUT);
+  digitalWrite(27, HIGH);
 }
 
 void loop()
