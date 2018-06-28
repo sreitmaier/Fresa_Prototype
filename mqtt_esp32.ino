@@ -24,7 +24,6 @@
 #include <PubSubClient.h>
 #include <SPI.h>
 #include <MFRC522.h>
-
 #include <Adafruit_NeoPixel.h>
 
 #define PIN 14
