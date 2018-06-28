@@ -25,6 +25,14 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+#include <Adafruit_NeoPixel.h>
+
+#define PIN 14
+#define NUM_LEDS 10
+#define BRIGHTNESS 50
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
+
 #ifndef BUILTIN_LED
 #define BUILTIN_LED 4
 #endif
@@ -44,6 +52,24 @@ constexpr uint8_t RST_PIN = 21; // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
 
 const int LOCK_PIN = 15;
+
+byte neopix_gamma[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+    2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5,
+    5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10,
+    10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+    17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
+    25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
+    37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
+    51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
+    69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
+    90, 92, 93, 95, 96, 98, 99, 101, 102, 104, 105, 107, 109, 110, 112, 114,
+    115, 117, 119, 120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142,
+    144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175,
+    177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
+    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
@@ -115,9 +141,22 @@ void ledControl(String status)
   if (status == "open")
   {
     Serial.println("leds green");
-    digitalWrite(BUILTIN_LED, HIGH); // Turn the LED on by making the voltage HIGH
-    delay(2000);
-    digitalWrite(BUILTIN_LED, LOW); // Turn the LED off
+    // Some example procedures showing how to display to the pixels:
+    //colorWipe(strip.Color(255, 0, 0), 50); // Red
+
+    colorWipe(strip.Color(0, 255, 0), 10); // Green
+
+    //colorWipe(strip.Color(0, 0, 255), 50); // Blue
+    //colorWipe(strip.Color(0, 0, 0, 255), 50); // White
+
+    //whiteOverRainbow(20,75,5);
+
+    pulseGreenWhite(7);
+
+    //fullWhite();
+    //delay(2000);
+
+    //rainbowFade2White(3,3,1);
   }
 }
 
@@ -275,6 +314,50 @@ void rfid()
   mfrc522.PCD_StopCrypto1();
 }
 
+// Fill the dots one after the other with a color
+void colorWipe(uint32_t c, uint8_t wait)
+{
+  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, c);
+    strip.show();
+    delay(wait);
+  }
+}
+
+void pulseGreenWhite(uint8_t wait)
+{
+  for (int j = 0; j < 256; j++)
+  {
+    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    {
+      strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
+    }
+    delay(wait);
+    strip.show();
+  }
+
+  for (int j = 255; j >= 0; j--)
+  {
+    for (uint16_t i = 0; i < strip.numPixels(); i++)
+    {
+      strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
+    }
+    delay(wait + 15j);
+    strip.show();
+  }
+}
+
+void fullWhite()
+{
+
+  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  {
+    strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
+  }
+  strip.show();
+}
+
 void setup()
 {
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
@@ -286,7 +369,11 @@ void setup()
   SPI.begin();                                               // Init SPI bus
   mfrc522.PCD_Init();                                        // Init MFRC522 card
   Serial.println(F("Read personal data on a MIFARE PICC:")); //shows in serial that it is ready to read
-  Serial.println(F("Ready!"));                               //shows in serial that it is ready to read
+  Serial.println(F("Ready!"));
+
+  strip.setBrightness(BRIGHTNESS);
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'                            //shows in serial that it is ready to read
 }
 
 void loop()

@@ -3,10 +3,9 @@ var fs = require('fs');
 var fileName = './static/stations.json';
 var file = require(fileName);
 
-const accountSid = 'ACdcbcf7a28edb77afa1f374d1baf5a2d6';
-const authToken = '9c887f15a2f4ecc090e662071ab7caee';
-const twilio = require('twilio')(accountSid, authToken);
-var smsTest = false;
+var TMClient = require('textmagic-rest-client');
+
+var c = new TMClient('sabinereitmaier', 'KEykHoBTj0MjGbNeIAK25uwUZEaRtB');
 
 var host = "mqtt://m21.cloudmqtt.com:18990"
 var options = {
@@ -52,14 +51,13 @@ io.on('connection', function (socket) {
   socket.on('locked', function (msg) {
     client.publish(msg, "loaded");
     if (smsTest) {
-      twilio.messages
-        .create({
-          body: 'Deine Bestellung wurde gerade abgegeben. Hole sie mit deiner Mitgliedskarte ab. Viel Spaß beim auspacken.',
-          from: '+4915735993212',
-          to: '+4915788718202'
-        })
-        .then(message => console.log(message.sid))
-        .done();
+      c.Messages.send({
+        text: 'Deine Bestellung ist nun an der if angekommen. Viel Spass beim Kochen.',
+        phones: '491733030149',
+        from: "Fresa"
+      }, function (err, res) {
+        console.log('Messages.send()', err, res);
+      });
     }
   })
 
