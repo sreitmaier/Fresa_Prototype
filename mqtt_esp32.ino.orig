@@ -83,6 +83,13 @@ void lockControl(String status)
   {
     Serial.println("unlocked");
 
+<<<<<<< HEAD
+    pinMode(15, OUTPUT);
+    digitalWrite(15, HIGH);
+    delay(100);
+    digitalWrite(15, LOW);
+
+=======
     // Open Lock
     digitalWrite(LOCK_PIN, HIGH);
     delay(200);
@@ -115,6 +122,7 @@ void ledControl(String status)
   if (status == "open")
   {
     Serial.println("leds green");
+>>>>>>> 74f7c50da1652175454f1696cb9e8288b83631fc
     digitalWrite(BUILTIN_LED, HIGH); // Turn the LED on by making the voltage HIGH
     delay(2000);
     digitalWrite(BUILTIN_LED, LOW); // Turn the LED off
@@ -286,7 +294,12 @@ void setup()
   SPI.begin();                                               // Init SPI bus
   mfrc522.PCD_Init();                                        // Init MFRC522 card
   Serial.println(F("Read personal data on a MIFARE PICC:")); //shows in serial that it is ready to read
+<<<<<<< HEAD
+  pinMode(27, OUTPUT);
+  digitalWrite(27, HIGH);
+=======
   Serial.println(F("Ready!"));                               //shows in serial that it is ready to read
+>>>>>>> 74f7c50da1652175454f1696cb9e8288b83631fc
 }
 
 void loop()

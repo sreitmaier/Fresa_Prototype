@@ -6,7 +6,6 @@ Install Dependencies with `npm install`.
 
 Run Project in Root Folder with `npm start`.
 
----
 
 ## MQTT Guide
 
@@ -30,7 +29,8 @@ In combination this creates the Topic Wording which has to be used throughout th
 The Message of each MQTT Notification deliveres either the current status of each Mini or Speis or triggers an action at the station.
 
 The Message can contain a variation of statuses: 
-#### Status
+
+**Status**
 * `open`
 * `reserved`
 * `loaded`
@@ -38,14 +38,13 @@ The Message can contain a variation of statuses:
 
 Each describes the status of the location it is reporting of. 
 
-#### Actions
+**Actions**
 * `open lock`
 
 
 ### Flags
 To make sure to get the status of all locations, even when they are not reporting, the Messages have to have the Retain flag set to `true`. 
 
----
 ## Delivery Page
 
 In `qr` is the page located which the delivery driver is navigated to, to trigger an action which signals the station to play a sound, light up the LEDs and open the lock. 
