@@ -4,6 +4,8 @@
     "__string": "cpp",
     "string": "cpp",
     "string_view": "cpp",
-    "rope": "cpp"
+    "rope": "cpp",
+    "fstream": "cpp",
+    "locale": "cpp"
   }
 }

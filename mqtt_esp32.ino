@@ -16,14 +16,16 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800
 
 // Update these with values suitable for your network.
 
-const char *ssid = "groot";
-const char *password = "test123456";
+const char *ssid = "CartoonNetwork";
+const char *password = "SPJ2017krda78";
 const char *mqtt_server = "m21.cloudmqtt.com";
 const char *fresaClient = "mini/0";
 const char *user = "ixysflsb";
 const char *pass = "yqVLDBTa3h1c";
 const char *willTopic = fresaClient;
 const char *willMsg = "disconnect";
+
+String currentState;
 
 constexpr uint8_t RST_PIN = 21; // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
@@ -120,7 +122,7 @@ void mqttOpen()
 
 void mqttClose()
 {
-  // send OPEN message to mqtt server
+  // send CLOSE message to mqtt server
   snprintf(msg, 75, "close");
   Serial.print("Publish message: ");
   Serial.println(msg);
@@ -163,6 +165,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   payload[length] = '\0';
   String message = String((char *)payload);
   Serial.println();
+  currentState = message;
 
   if (message == "open lock")
   {
@@ -180,11 +183,17 @@ void reconnect()
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str(), user, pass, willTopic, 2, 1, willMsg))
+    if (client.connect(clientId.c_str(), user, pass))
     {
       Serial.println("connected");
-      // ... and resubscribe
       client.subscribe(fresaClient);
+
+      // send OPEN message to mqtt server
+      snprintf(msg, 75, "open");
+      Serial.print("Publish message: ");
+      Serial.println(msg);
+      client.publish(fresaClient, msg, true);
+      // ... and resubscribe
     }
     else
     {
@@ -379,15 +388,23 @@ void loop()
 
   lock_state = digitalRead(LOCK_PIN_READ);
 
+  if (currentState == "loaded" || currentState == "open")
+  {
+    rfid();
+  }
+
   if (lock_state == HIGH)
   {
     // Serial.println("HIGH");
   }
 
-  if (lock_state == LOW)
+  if (currentState == "open lock" && lock_state == LOW)
   {
     // Serial.println("LOW");
+    // send OPEN message to mqtt server
+    snprintf(msg, 75, "loaded");
+    Serial.print("Publish message: ");
+    Serial.println(msg);
+    client.publish(fresaClient, msg, true);
   }
-
-  rfid();
 }

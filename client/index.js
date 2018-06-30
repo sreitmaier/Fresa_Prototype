@@ -95,5 +95,5 @@ io.on('connection', function (socket) {
 
 
 http.listen(3001, function () {
-  console.log('listening on http://localhost:3000');
+  console.log('listening on http://localhost:3001');
 });
