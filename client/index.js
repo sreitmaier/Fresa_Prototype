@@ -13,6 +13,8 @@ var options = {
   password: "yqVLDBTa3h1c"
 }
 
+var smsTest = false;
+
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -48,16 +50,22 @@ io.on('connection', function (socket) {
     client.publish(msg, "open lock")
   })
 
+  socket.on('reserve', function (data) {
+    client.publish(data.topic, data.message)
+  })
+
   socket.on('locked', function (msg) {
     client.publish(msg, "loaded");
     if (smsTest) {
       c.Messages.send({
-        text: 'Deine Bestellung ist nun an der if angekommen. Viel Spass beim Kochen.',
+        text: 'Deine Bestellung wartet nun in deiner Speisekamemr auf dich. Viel Spass beim Kochen.',
         phones: '491733030149',
         from: "Fresa"
       }, function (err, res) {
         console.log('Messages.send()', err, res);
       });
+    } else if (!smsTest) {
+      console.log("sms send");
     }
   })
 

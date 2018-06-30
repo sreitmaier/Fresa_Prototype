@@ -9,12 +9,15 @@
   <link rel="stylesheet" href="style.css">
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.css' rel='stylesheet' />
+  <script src="socket.io.js"></script>
 
 </head>
 
 <body>
   <div id='map' style='width: 100%; height: 100vh;'></div>
   <script>
+    var socket = io();
+
     mapboxgl.accessToken =
       "pk.eyJ1IjoiZ29ybGFuZG8iLCJhIjoiY2lsdnE2YmZ5MDFrOXRpa3JvZHp6dGZkOSJ9.TZQJdmpDfLeKPUhA_aFS7Q";
     /* Map:
@@ -36,6 +39,10 @@ This represents the map on the page. */
       map.loadImage("./assets/marker-closed.png", function (error, image) {
         if (error) throw error;
         map.addImage("closed", image);
+      });
+      map.loadImage("./assets/marker-reserved.png", function (error, image) {
+        if (error) throw error;
+        map.addImage("reserved", image);
       });
 
       window.setInterval(function () {
@@ -64,6 +71,9 @@ marker gets placed. */
         var coordinates = e.features[0].geometry.coordinates.slice();
         var description = e.features[0].properties.status;
 
+        var html = description + '</br><button class="reserve" id="' + e.features[0].properties.name +
+          '">Reservieren</button>';
+
         // Ensure that if the map is zoomed out such that multiple
         // copies of the feature are visible, the popup appears
         // over the copy being pointed to.
@@ -73,8 +83,17 @@ marker gets placed. */
 
         new mapboxgl.Popup()
           .setLngLat(coordinates)
-          .setHTML(description)
+          .setHTML(html)
           .addTo(map);
+
+        $('.mapboxgl-popup-content').on('click', '.reserve', function () {
+          console.log("click");
+          var id = this.id;
+          socket.emit('reserve', {
+            topic: id,
+            message: "reserved"
+          });
+        })
       });
 
       // Change the cursor to a pointer when the mouse is over the places layer.
@@ -89,12 +108,10 @@ marker gets placed. */
     });
   </script>
 
-  <script src="socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
     crossorigin="anonymous"></script>
   <script>
     $(function () {
-      var socket = io();
 
       $.getJSON("./stations.json", function (data) {
         console.log(data);
@@ -107,11 +124,14 @@ marker gets placed. */
 
       socket.on('message', function (data) {
         if (data.message == "open") {
-          $('.client').addClass(data.message)
-          $('.client').removeClass("closed")
+          $('.client').removeClass();
+          $('.client').addClass(data.message);
         } else if (data.message == "closed") {
-          $('.client').addClass(data.message)
-          $('.client').removeClass("open")
+          $('.client').removeClass()
+          $('.client').addClass(data.message);
+        } else if (data.message == "reserved") {
+          $('.client').removeClass()
+          $('.client').addClass(data.message);
         }
         $('.client-name').text(data.topic)
       })

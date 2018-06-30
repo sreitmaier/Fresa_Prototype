@@ -1,25 +1,3 @@
-/*
- Basic ESP32 MQTT example
-
- This sketch demonstrates the capabilities of the pubsub library in combination
- with the ESP32 board/library.
-
- It connects to an MQTT server then:
-  - publishes "hello world" to the topic "outTopic" every two seconds
-  - subscribes to the topic "inTopic", printing out any messages
-    it receives. NB - it assumes the received payloads are strings not binary
-  - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
-    else switch it off
-
- It will reconnect to the server if the connection is lost using a blocking
- reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
- achieve the same result without blocking the main loop.
-
- To install the ESP32 Arduino:
-  - https://github.com/espressif/arduino-esp32
-
-*/
-
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <SPI.h>
@@ -38,8 +16,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800
 
 // Update these with values suitable for your network.
 
-const char *ssid = "...";
-const char *password = "MeinIMDinDieburg";
+const char *ssid = "groot";
+const char *password = "test123456";
 const char *mqtt_server = "m21.cloudmqtt.com";
 const char *fresaClient = "mini/0";
 const char *user = "ixysflsb";
@@ -51,6 +29,7 @@ constexpr uint8_t RST_PIN = 21; // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
 
 const int LOCK_PIN = 15;
+const int LOCK_PIN_READ = 32;
 
 byte neopix_gamma[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -77,6 +56,8 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
+
+int lock_state;
 void setup_wifi()
 {
 
@@ -110,9 +91,20 @@ void lockControl(String status)
 
     // Open Lock
     digitalWrite(LOCK_PIN, HIGH);
-    delay(200);
+    delay(500);
     digitalWrite(LOCK_PIN, LOW);
     mqttOpen();
+    ledControl("open");
+  }
+
+  if (status == "open lock")
+  {
+    Serial.println("unlocked");
+
+    // Open Lock
+    digitalWrite(LOCK_PIN, HIGH);
+    delay(500);
+    digitalWrite(LOCK_PIN, LOW);
     ledControl("open");
   }
 }
@@ -174,7 +166,7 @@ void callback(char *topic, byte *payload, unsigned int length)
 
   if (message == "open lock")
   {
-    lockControl("open");
+    lockControl("open lock");
   }
 }
 
@@ -342,7 +334,7 @@ void pulseGreenWhite(uint8_t wait)
     {
       strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
     }
-    delay(wait + 15j);
+    delay(wait + 15);
     strip.show();
   }
 }
@@ -361,6 +353,7 @@ void setup()
 {
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
   pinMode(LOCK_PIN, OUTPUT);
+  pinMode(LOCK_PIN_READ, INPUT_PULLUP);
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 18990);
@@ -383,6 +376,18 @@ void loop()
     reconnect();
   }
   client.loop();
+
+  lock_state = digitalRead(LOCK_PIN_READ);
+
+  if (lock_state == HIGH)
+  {
+    // Serial.println("HIGH");
+  }
+
+  if (lock_state == LOW)
+  {
+    // Serial.println("LOW");
+  }
 
   rfid();
 }
