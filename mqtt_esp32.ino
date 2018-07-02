@@ -30,7 +30,6 @@ const int LOCK_PIN = 15;
 const int LOCK_PIN_READ = 32;
 
 int statuss = 0;
-int out = 0;
 
 byte neopix_gamma[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -95,7 +94,7 @@ void lockControl(String state)
     digitalWrite(LOCK_PIN, HIGH);
     delay(1000);
     digitalWrite(LOCK_PIN, LOW);
-    mqttOpen();
+    mqttMsg("open");
     ledControl("open");
   }
 
@@ -111,37 +110,10 @@ void lockControl(String state)
   }
 }
 
-void mqttOpen()
+void mqttMsg(char *data)
 {
   // send OPEN message to mqtt server
-  snprintf(msg, 75, "open");
-  Serial.print("Publish message: ");
-  Serial.println(msg);
-  client.publish(fresaClient, msg, true);
-}
-
-void mqttClose()
-{
-  // send CLOSE message to mqtt server
-  snprintf(msg, 75, "close");
-  Serial.print("Publish message: ");
-  Serial.println(msg);
-  client.publish(fresaClient, msg, true);
-}
-
-void mqttLoaded()
-{
-  // send OPEN message to mqtt server
-  snprintf(msg, 75, "loaded");
-  Serial.print("Publish message: ");
-  Serial.println(msg);
-  client.publish(fresaClient, msg, true);
-}
-
-void mqttEmptyLoaded()
-{
-  // send OPEN message to mqtt server
-  snprintf(msg, 75, "empty loaded");
+  snprintf(msg, 75, data);
   Serial.print("Publish message: ");
   Serial.println(msg);
   client.publish(fresaClient, msg, true);
@@ -152,13 +124,15 @@ void ledControl(String status)
   if (status == "open")
   {
     Serial.println("leds green");
-    colorWipe(strip.Color(0, 255, 0), 10); // Green
-
-    pulseGreenWhite(7);
+    startShow(1);
+    delay(4000);
+    startShow(0);
   }
   else if (status == "delivery")
   {
-    colorWipe(strip.Color(0, 0, 255), 10); // Green
+    startShow(3);
+    delay(4000);
+    startShow(0);
   }
 }
 
@@ -193,14 +167,11 @@ void reconnect()
     if (client.connect(clientId.c_str(), user, pass))
     {
       Serial.println("connected");
+      // ... and resubscribe
       client.subscribe(fresaClient);
 
       // send OPEN message to mqtt server
-      snprintf(msg, 75, "open");
-      Serial.print("Publish message: ");
-      Serial.println(msg);
-      client.publish(fresaClient, msg, true);
-      // ... and resubscribe
+      mqttMsg("open");
     }
     else
     {
@@ -248,12 +219,10 @@ void rfid()
     Serial.println();
     statuss = 1;
     lockControl("open");
-    startShow(1);
     //light the LEDS Fresa Style
     //colorWipe(strip.Color(0, 255, 0), 20); // Green
 
     //pulseGreenWhite(7);
-    startShow(0);
   }
 
   else
@@ -272,26 +241,6 @@ void colorWipe(uint32_t c, uint8_t wait)
     strip.show();
     delay(wait);
   }
-}
-
-//TestLib for Turning LED off again afer lock closes
-void startShow(int i)
-{
-  switch (i)
-  {
-  case 0:
-    colorWipe(strip.Color(0, 0, 0), 50); // Black/off
-    break;
-  case 1:
-    colorWipe(strip.Color(0, 255, 0), 20); // Green
-    break;
-  case 2:
-    colorWipe(strip.Color(0, 0, 0, 255), 20); //White
-    break;
-    // case 3: colorWipe(strip.Color(0, 255, 0), 20);
-    // break;
-  }
-  strip.show();
 }
 
 void pulseGreenWhite(uint8_t wait)
@@ -317,12 +266,23 @@ void pulseGreenWhite(uint8_t wait)
   }
 }
 
-void fullWhite()
+//TestLib for Turning LED off again afer lock closes
+void startShow(int i)
 {
-
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  switch (i)
   {
-    strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
+  case 0:
+    colorWipe(strip.Color(0, 0, 0), 50); // Black/off
+    break;
+  case 1:
+    colorWipe(strip.Color(0, 255, 0), 20); // Green
+    break;
+  case 2:
+    colorWipe(strip.Color(0, 0, 0, 255), 20); //White
+    break;
+  case 3:
+    colorWipe(strip.Color(0, 0, 255), 20); // Blue
+    break;
   }
   strip.show();
 }
@@ -364,6 +324,7 @@ void loop()
 
   if (lock_state == HIGH && sent)
   {
+
     sent = false;
     // Serial.println("HIGH");
   }
@@ -372,12 +333,12 @@ void loop()
   {
     // Serial.println("LOW");
     // send OPEN message to mqtt server
-    mqttLoaded();
+    mqttMsg("loaded");
     sent = true;
   }
   else if (lock_state == LOW && !sent && currentState == "open")
   {
-    mqttEmptyLoaded();
+    mqttMsg("empty loaded");
     sent = true;
   }
 }
