@@ -5,19 +5,15 @@
 #include <Adafruit_NeoPixel.h>
 
 #define PIN 14
-#define NUM_LEDS 10
+#define NUM_LEDS 20
 #define BRIGHTNESS 50
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
-#ifndef BUILTIN_LED
-#define BUILTIN_LED 4
-#endif
-
 // Update these with values suitable for your network.
 
-const char *ssid = "CartoonNetwork";
-const char *password = "SPJ2017krda78";
+const char *ssid = "groot";
+const char *password = "test123456";
 const char *mqtt_server = "m21.cloudmqtt.com";
 const char *fresaClient = "mini/0";
 const char *user = "ixysflsb";
@@ -32,6 +28,9 @@ constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
 
 const int LOCK_PIN = 15;
 const int LOCK_PIN_READ = 32;
+
+int statuss = 0;
+int out = 0;
 
 byte neopix_gamma[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -58,8 +57,9 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
-
 int lock_state;
+bool sent;
+
 void setup_wifi()
 {
 
@@ -85,29 +85,29 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
-void lockControl(String status)
+void lockControl(String state)
 {
-  if (status == "open")
+  if (state == "open")
   {
     Serial.println("unlocked");
 
     // Open Lock
     digitalWrite(LOCK_PIN, HIGH);
-    delay(500);
+    delay(1000);
     digitalWrite(LOCK_PIN, LOW);
     mqttOpen();
     ledControl("open");
   }
 
-  if (status == "open lock")
+  if (state == "open lock")
   {
     Serial.println("unlocked");
 
     // Open Lock
     digitalWrite(LOCK_PIN, HIGH);
-    delay(500);
+    delay(1000);
     digitalWrite(LOCK_PIN, LOW);
-    ledControl("open");
+    ledControl("delivery");
   }
 }
 
@@ -129,27 +129,36 @@ void mqttClose()
   client.publish(fresaClient, msg, true);
 }
 
+void mqttLoaded()
+{
+  // send OPEN message to mqtt server
+  snprintf(msg, 75, "loaded");
+  Serial.print("Publish message: ");
+  Serial.println(msg);
+  client.publish(fresaClient, msg, true);
+}
+
+void mqttEmptyLoaded()
+{
+  // send OPEN message to mqtt server
+  snprintf(msg, 75, "empty loaded");
+  Serial.print("Publish message: ");
+  Serial.println(msg);
+  client.publish(fresaClient, msg, true);
+}
+
 void ledControl(String status)
 {
   if (status == "open")
   {
     Serial.println("leds green");
-    // Some example procedures showing how to display to the pixels:
-    //colorWipe(strip.Color(255, 0, 0), 50); // Red
-
     colorWipe(strip.Color(0, 255, 0), 10); // Green
 
-    //colorWipe(strip.Color(0, 0, 255), 50); // Blue
-    //colorWipe(strip.Color(0, 0, 0, 255), 50); // White
-
-    //whiteOverRainbow(20,75,5);
-
     pulseGreenWhite(7);
-
-    //fullWhite();
-    //delay(2000);
-
-    //rainbowFade2White(3,3,1);
+  }
+  else if (status == "delivery")
+  {
+    colorWipe(strip.Color(0, 0, 255), 10); // Green
   }
 }
 
@@ -167,10 +176,8 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.println();
   currentState = message;
 
-  if (message == "open lock")
-  {
-    lockControl("open lock");
-  }
+  if (currentState == "open lock")
+    lockControl(currentState);
 }
 
 void reconnect()
@@ -208,110 +215,52 @@ void reconnect()
 
 void rfid()
 {
-  // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
-  MFRC522::MIFARE_Key key;
-  for (byte i = 0; i < 6; i++)
-    key.keyByte[i] = 0xFF;
-
-  //some variables we need
-  byte block;
-  byte len;
-  MFRC522::StatusCode status;
-
-  //-------------------------------------------
-
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent())
   {
     return;
   }
-
   // Select one of the cards
   if (!mfrc522.PICC_ReadCardSerial())
   {
     return;
   }
-
-  Serial.println(F("**Card Detected:**"));
-
-  //-------------------------------------------
-
-  mfrc522.PICC_DumpDetailsToSerial(&(mfrc522.uid)); //dump some details about the card
-
-  //mfrc522.PICC_DumpToSerial(&(mfrc522.uid));      //uncomment this to see all blocks in hex
-
-  //-------------------------------------------
-
-  Serial.print(F("Name: "));
-
-  byte buffer1[18];
-
-  block = 4;
-  len = 18;
-
-  //------------------------------------------- GET FIRST NAME
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 4, &key, &(mfrc522.uid)); //line 834 of MFRC522.cpp file
-  if (status != MFRC522::STATUS_OK)
+  //Show UID on serial monitor
+  Serial.println();
+  Serial.print(" UID tag :");
+  String content = "";
+  byte letter;
+  for (byte i = 0; i < mfrc522.uid.size; i++)
   {
-    Serial.print(F("Authentication failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
+    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+    Serial.print(mfrc522.uid.uidByte[i], HEX);
+    content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+    content.concat(String(mfrc522.uid.uidByte[i], HEX));
+  }
+  content.toUpperCase();
+  Serial.println();
+  if (content.substring(1) == "A4 E3 E6 1E") //change UID of the card that you want to give access
+  {
+    Serial.println("Access Granted");
+    Serial.println("Hallo Sabine Reitmaier");
+    delay(1000);
+    Serial.println("Nimmm dein Fresa Paket mit!");
+    Serial.println();
+    statuss = 1;
+    lockControl("open");
+    startShow(1);
+    //light the LEDS Fresa Style
+    //colorWipe(strip.Color(0, 255, 0), 20); // Green
+
+    //pulseGreenWhite(7);
+    startShow(0);
   }
 
-  status = mfrc522.MIFARE_Read(block, buffer1, &len);
-  if (status != MFRC522::STATUS_OK)
+  else
   {
-    Serial.print(F("Reading failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
+    Serial.println(" Access Denied ");
+    delay(3000);
   }
-
-  //PRINT FIRST NAME
-  for (uint8_t i = 0; i < 16; i++)
-  {
-    if (buffer1[i] != 32)
-    {
-      Serial.write(buffer1[i]);
-    }
-  }
-  Serial.print(" ");
-
-  //---------------------------------------- GET LAST NAME
-
-  byte buffer2[18];
-  block = 1;
-
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 1, &key, &(mfrc522.uid)); //line 834
-  if (status != MFRC522::STATUS_OK)
-  {
-    Serial.print(F("Authentication failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
-
-  status = mfrc522.MIFARE_Read(block, buffer2, &len);
-  if (status != MFRC522::STATUS_OK)
-  {
-    Serial.print(F("Reading failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
-
-  //PRINT LAST NAME
-  for (uint8_t i = 0; i < 16; i++)
-  {
-    Serial.write(buffer2[i]);
-  }
-
-  //----------------------------------------
-
-  Serial.println(F("\n**End Reading**\n"));
-  lockControl("open");
-
-  delay(1000); //change value if you want to read cards faster
-
-  mfrc522.PICC_HaltA();
-  mfrc522.PCD_StopCrypto1();
 }
 
 // Fill the dots one after the other with a color
@@ -323,6 +272,26 @@ void colorWipe(uint32_t c, uint8_t wait)
     strip.show();
     delay(wait);
   }
+}
+
+//TestLib for Turning LED off again afer lock closes
+void startShow(int i)
+{
+  switch (i)
+  {
+  case 0:
+    colorWipe(strip.Color(0, 0, 0), 50); // Black/off
+    break;
+  case 1:
+    colorWipe(strip.Color(0, 255, 0), 20); // Green
+    break;
+  case 2:
+    colorWipe(strip.Color(0, 0, 0, 255), 20); //White
+    break;
+    // case 3: colorWipe(strip.Color(0, 255, 0), 20);
+    // break;
+  }
+  strip.show();
 }
 
 void pulseGreenWhite(uint8_t wait)
@@ -374,7 +343,7 @@ void setup()
 
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
-  strip.show(); // Initialize all pixels to 'off'                            //shows in serial that it is ready to read
+  strip.show(); // Initialize all pixels to 'off'
 }
 
 void loop()
@@ -386,25 +355,29 @@ void loop()
   }
   client.loop();
 
-  lock_state = digitalRead(LOCK_PIN_READ);
-
   if (currentState == "loaded" || currentState == "open")
   {
     rfid();
   }
 
-  if (lock_state == HIGH)
+  lock_state = digitalRead(LOCK_PIN_READ); // reads the state of the Lock
+
+  if (lock_state == HIGH && sent)
   {
+    sent = false;
     // Serial.println("HIGH");
   }
 
-  if (currentState == "open lock" && lock_state == LOW)
+  if (lock_state == LOW && !sent && (currentState == "reserved" || currentState == "open lock"))
   {
     // Serial.println("LOW");
     // send OPEN message to mqtt server
-    snprintf(msg, 75, "loaded");
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish(fresaClient, msg, true);
+    mqttLoaded();
+    sent = true;
+  }
+  else if (lock_state == LOW && !sent && currentState == "open")
+  {
+    mqttEmptyLoaded();
+    sent = true;
   }
 }
