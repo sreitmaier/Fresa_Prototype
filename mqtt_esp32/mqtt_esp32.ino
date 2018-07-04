@@ -12,8 +12,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800
 
 // Update these with values suitable for your network.
 
-const char *ssid = "groot";
-const char *password = "test123456";
+const char *ssid = "...";
+const char *password = "MeinIMDinDieburg";
 const char *mqtt_server = "m21.cloudmqtt.com";
 const char *fresaClient = "mini/0";
 const char *user = "ixysflsb";
@@ -22,14 +22,14 @@ const char *willTopic = fresaClient;
 const char *willMsg = "disconnect";
 
 String currentState;
+String previousState = "disconnect";
+bool disconnect = false;
 
 constexpr uint8_t RST_PIN = 21; // Configurable, see typical pin layout above
 constexpr uint8_t SS_PIN = 23;  // Configurable, see typical pin layout above
 
 const int LOCK_PIN = 15;
 const int LOCK_PIN_READ = 32;
-
-int statuss = 0;
 
 byte neopix_gamma[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -58,6 +58,7 @@ char msg[50];
 int value = 0;
 int lock_state;
 bool sent;
+bool startup;
 
 void setup_wifi()
 {
@@ -91,11 +92,10 @@ void lockControl(String state)
     Serial.println("unlocked");
 
     // Open Lock
+    ledControl("open");
     digitalWrite(LOCK_PIN, HIGH);
     delay(1000);
     digitalWrite(LOCK_PIN, LOW);
-    mqttMsg("open");
-    ledControl("open");
   }
 
   if (state == "open lock")
@@ -103,10 +103,10 @@ void lockControl(String state)
     Serial.println("unlocked");
 
     // Open Lock
+    ledControl("delivery");
     digitalWrite(LOCK_PIN, HIGH);
     delay(1000);
     digitalWrite(LOCK_PIN, LOW);
-    ledControl("delivery");
   }
 }
 
@@ -117,6 +117,7 @@ void mqttMsg(char *data)
   Serial.print("Publish message: ");
   Serial.println(msg);
   client.publish(fresaClient, msg, true);
+  sent = true;
 }
 
 void ledControl(String status)
@@ -125,14 +126,12 @@ void ledControl(String status)
   {
     Serial.println("leds green");
     startShow(1);
-    delay(4000);
-    startShow(0);
+    // delay(4000);
   }
   else if (status == "delivery")
   {
     startShow(3);
-    delay(4000);
-    startShow(0);
+    // delay(4000);
   }
 }
 
@@ -148,10 +147,36 @@ void callback(char *topic, byte *payload, unsigned int length)
   payload[length] = '\0';
   String message = String((char *)payload);
   Serial.println();
-  currentState = message;
+
+  if (previousState == "disconnect" && !disconnect)
+  {
+    currentState = "open";
+    previousState = "loaded";
+    disconnect = true;
+  }
+  else if (message == "disconnect" && disconnect)
+  {
+    return;
+  }
+  else
+  {
+    if (currentState == "open lock")
+    {
+      // Skip change of previousState due to bug
+    }
+    else
+    {
+      previousState = currentState;
+    }
+    currentState = message;
+  }
+  Serial.println(currentState);
+  Serial.println(previousState);
 
   if (currentState == "open lock")
+  {
     lockControl(currentState);
+  }
 }
 
 void reconnect()
@@ -164,14 +189,11 @@ void reconnect()
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str(), user, pass))
+    if (client.connect(clientId.c_str(), user, pass, willTopic, 2, 1, willMsg))
     {
       Serial.println("connected");
       // ... and resubscribe
       client.subscribe(fresaClient);
-
-      // send OPEN message to mqtt server
-      mqttMsg("open");
     }
     else
     {
@@ -210,25 +232,17 @@ void rfid()
   }
   content.toUpperCase();
   Serial.println();
-  if (content.substring(1) == "A4 E3 E6 1E") //change UID of the card that you want to give access
+  if (content.substring(1) == "14 73 CA 73" || content.substring(1) == "A4 E3 E6 1E" || content.substring(1) == "C6 D9 C8 73") //change UID of the card that you want to give access
   {
     Serial.println("Access Granted");
-    Serial.println("Hallo Sabine Reitmaier");
-    delay(1000);
-    Serial.println("Nimmm dein Fresa Paket mit!");
-    Serial.println();
-    statuss = 1;
+    delay(500);
     lockControl("open");
-    //light the LEDS Fresa Style
-    //colorWipe(strip.Color(0, 255, 0), 20); // Green
-
-    //pulseGreenWhite(7);
+    startup = false;
   }
 
   else
   {
     Serial.println(" Access Denied ");
-    delay(3000);
   }
 }
 
@@ -243,36 +257,13 @@ void colorWipe(uint32_t c, uint8_t wait)
   }
 }
 
-void pulseGreenWhite(uint8_t wait)
-{
-  for (int j = 0; j < 256; j++)
-  {
-    for (uint16_t i = 0; i < strip.numPixels(); i++)
-    {
-      strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
-    }
-    delay(wait);
-    strip.show();
-  }
-
-  for (int j = 255; j >= 0; j--)
-  {
-    for (uint16_t i = 0; i < strip.numPixels(); i++)
-    {
-      strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
-    }
-    delay(wait + 15);
-    strip.show();
-  }
-}
-
 //TestLib for Turning LED off again afer lock closes
 void startShow(int i)
 {
   switch (i)
   {
   case 0:
-    colorWipe(strip.Color(0, 0, 0), 50); // Black/off
+    colorWipe(strip.Color(0, 0, 0), 20); // Black/off
     break;
   case 1:
     colorWipe(strip.Color(0, 255, 0), 20); // Green
@@ -303,7 +294,11 @@ void setup()
 
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+  // strip.show(); // Initialize all pixels to 'off'
+  startShow(1);
+  delay(1000);
+  startShow(0);
+  startup = true;
 }
 
 void loop()
@@ -329,16 +324,26 @@ void loop()
     // Serial.println("HIGH");
   }
 
-  if (lock_state == LOW && !sent && (currentState == "reserved" || currentState == "open lock"))
+  if (lock_state == LOW && !sent && previousState == "reserved" && currentState == "open lock")
   {
     // Serial.println("LOW");
     // send OPEN message to mqtt server
     mqttMsg("loaded");
-    sent = true;
+    startShow(0);
   }
-  else if (lock_state == LOW && !sent && currentState == "open")
+  else if (lock_state == LOW && !sent && currentState == "open" && (previousState == "loaded" || previousState == "open lock" || previousState == "empty loaded") && !startup)
   {
     mqttMsg("empty loaded");
-    sent = true;
+    startShow(0);
+  }
+  else if (lock_state == LOW && !sent && (currentState == "loaded" || currentState == "empty loaded" || currentState == "open lock"))
+  {
+    mqttMsg("open");
+    startShow(0);
+  }
+  else if (lock_state == LOW && !sent && currentState == "empty loaded" && previousState == "open")
+  {
+    mqttMsg("open");
+    startShow(0);
   }
 }

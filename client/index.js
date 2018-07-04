@@ -54,21 +54,6 @@ io.on('connection', function (socket) {
     client.publish(data.topic, data.message)
   })
 
-  socket.on('locked', function (msg) {
-    client.publish(msg, "loaded");
-    if (smsTest) {
-      c.Messages.send({
-        text: 'Deine Bestellung wartet nun in deiner Speisekamemr auf dich. Viel Spass beim Kochen.',
-        phones: '491733030149',
-        from: "Fresa"
-      }, function (err, res) {
-        console.log('Messages.send()', err, res);
-      });
-    } else if (!smsTest) {
-      console.log("sms send");
-    }
-  })
-
   client.on('message', function (topic, message) {
     // message is Buffer
     // console.log(message.toString())
@@ -90,6 +75,20 @@ io.on('connection', function (socket) {
       topic: topic.toString(),
       message: message.toString()
     })
+
+    if (message.toString() == "loaded") {
+      if (smsTest) {
+        c.Messages.send({
+          text: 'Deine Bestellung wartet nun in deiner Speisekamemr auf dich. Viel Spass beim Kochen.',
+          phones: '491733030149',
+          from: "Fresa"
+        }, function (err, res) {
+          console.log('Messages.send()', err, res);
+        });
+      } else if (!smsTest) {
+        console.log("sms send");
+      }
+    }
   })
 });
 

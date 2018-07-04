@@ -1,11 +1,13 @@
 {
   "files.associations": {
+    "*.sass": "sass",
     "__locale": "cpp",
     "__string": "cpp",
     "string": "cpp",
     "string_view": "cpp",
     "rope": "cpp",
     "fstream": "cpp",
-    "locale": "cpp"
+    "locale": "cpp",
+    "*.ipp": "cpp"
   }
 }

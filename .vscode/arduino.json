@@ -3,5 +3,5 @@
     "configuration": "FlashFreq=80,UploadSpeed=921600,DebugLevel=none",
     "port": "/dev/cu.SLAB_USBtoUART",
     "output": "./build",
-    "sketch": "mqtt_esp32.ino"
+    "sketch": "mqtt_esp32/mqtt_esp32.ino"
 }
