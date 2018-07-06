@@ -96,7 +96,7 @@ io.on('connection', function (socket) {
           console.log('Messages.send()', err, res);
         });
       } else if (!smsTest) {
-        console.log("sms send");
+        console.log("sms sent");
       }
     }
 
