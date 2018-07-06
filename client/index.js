@@ -13,7 +13,7 @@ var options = {
   password: "yqVLDBTa3h1c"
 }
 
-var smsTest = false;
+var smsTest = true;
 
 var express = require('express');
 var app = express();
@@ -67,21 +67,29 @@ io.on('connection', function (socket) {
     num = num[0]
 
     file.features[num].properties.status = message.toString();
+    if (lastClick >= (Date.now() - delay)) {
+      return;
+    }
+    lastClick = Date.now();
+
 
     fs.writeFile(fileName, JSON.stringify(file), function (err) {
       if (err) return console.log(err);
       console.log(JSON.stringify(file));
       console.log('writing to ' + fileName);
     });
+
     socket.emit('message', {
       topic: topic.toString(),
       message: message.toString()
     })
 
-    if (message.toString() == "loaded" && lastClick >= (Date.now() - delay)) {
+
+
+    if (message.toString() == "loaded") {
       if (smsTest) {
         c.Messages.send({
-          text: 'Deine Bestellung wartet nun in deiner Speisekamemr auf dich. Viel Spass beim Kochen.',
+          text: 'Deine Bestellung wartet nun in deiner Speisekammer auf dich. Viel Spass beim Kochen.',
           phones: '491733030149',
           from: "Fresa"
         }, function (err, res) {
@@ -90,7 +98,6 @@ io.on('connection', function (socket) {
       } else if (!smsTest) {
         console.log("sms send");
       }
-      lastClick = Date.now();
     }
 
   })
