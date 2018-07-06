@@ -147,8 +147,7 @@ void startShow(int i)
   case 5: strip.setPixelColor(0,0,0,255); //Single Blue 
     break;
   case 6: strip.setPixelColor(0,40,0,40); //Single Violet 
-  
-   break;
+    break;
   
   }
   strip.show();
