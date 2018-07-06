@@ -19,6 +19,8 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var lastClick = 0;
+var delay = 1000;
 
 app.use(express.static('static'));
 
@@ -76,7 +78,7 @@ io.on('connection', function (socket) {
       message: message.toString()
     })
 
-    if (message.toString() == "loaded") {
+    if (message.toString() == "loaded" && lastClick >= (Date.now() - delay)) {
       if (smsTest) {
         c.Messages.send({
           text: 'Deine Bestellung wartet nun in deiner Speisekamemr auf dich. Viel Spass beim Kochen.',
@@ -88,7 +90,9 @@ io.on('connection', function (socket) {
       } else if (!smsTest) {
         console.log("sms send");
       }
+      lastClick = Date.now();
     }
+
   })
 });
 
