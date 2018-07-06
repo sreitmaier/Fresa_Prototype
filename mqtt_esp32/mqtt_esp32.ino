@@ -246,10 +246,10 @@ void rfid()
   }
 }
 
-// Fill the dots one after the other with a color
+// Fill the dots one after the other with a color, leave the first LED for showing the state
 void colorWipe(uint32_t c, uint8_t wait)
 {
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  for (uint16_t i = 0; i < strip.numPixels() - 1; i++)
   {
     strip.setPixelColor(i, c);
     strip.show();
@@ -257,7 +257,7 @@ void colorWipe(uint32_t c, uint8_t wait)
   }
 }
 
-//TestLib for Turning LED off again afer lock closes
+//LED Switch States
 void startShow(int i)
 {
   switch (i)
@@ -266,13 +266,26 @@ void startShow(int i)
     colorWipe(strip.Color(0, 0, 0), 20); // Black/off
     break;
   case 1:
-    colorWipe(strip.Color(0, 255, 0), 20); // Green
+    colorWipe(strip.Color(0, 200, 18), 20); // Fresa Green
     break;
   case 2:
     colorWipe(strip.Color(0, 0, 0, 255), 20); //White
     break;
   case 3:
     colorWipe(strip.Color(0, 0, 255), 20); // Blue
+    break;
+
+  case 4:
+    strip.setPixelColor(0, 0, 200, 18); //Single Fresa
+    break;
+  case 5:
+    strip.setPixelColor(0, 255, 0, 0); //Single Red
+    break;
+  case 6:
+    strip.setPixelColor(0, 0, 0, 255); //Single Blue
+    break;
+  case 7:
+    strip.setPixelColor(0, 40, 0, 40); //Single Violet
     break;
   }
   strip.show();

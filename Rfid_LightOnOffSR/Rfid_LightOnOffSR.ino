@@ -94,8 +94,15 @@ void loop()
     //pulseGreenWhite(7);
     delay(100);
     startShow(0);
-    delay(50);
+    delay(1000);
     startShow(3);
+    delay(1000);
+    startShow(4);
+    delay(1000);
+    startShow(5);
+    delay(1000);
+    startShow(6);
+    delay(1000);
    
   
   }
@@ -115,6 +122,7 @@ void colorWipe(uint32_t c, uint8_t wait)
     strip.setPixelColor(i, c);
     strip.show();
     delay(wait);
+    
   }
 }
 
@@ -132,10 +140,16 @@ void startShow(int i)
   case 2:
     colorWipe(strip.Color(0, 0, 0, 255), 20); //White
     break;
-  case 3: strip.setPixelColor(0, 0, 200, 18);
+  case 3: strip.setPixelColor(0, 0, 200, 18); //Single Fresa 
     break;
-  case 4: strip.setPixelColor(0, 255, 0, 0);
+  case 4: strip.setPixelColor(0, 255, 0, 0); //Single Red 
     break;
+  case 5: strip.setPixelColor(0,0,0,255); //Single Blue 
+    break;
+  case 6: strip.setPixelColor(0,40,0,40); //Single Violet 
+  
+   break;
+  
   }
   strip.show();
 }
