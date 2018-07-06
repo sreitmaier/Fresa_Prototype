@@ -3,8 +3,9 @@
 #include <MFRC522.h>
 
 #define PIN 14
-#define NUM_LEDS 10
-#define BRIGHTNESS 50
+
+#define NUM_LEDS 19
+#define BRIGHTNESS 30
 
 constexpr uint8_t RST_PIN = 21; // Setting for Adafruit Feather ESP32
 constexpr uint8_t SS_PIN = 23;  // Setting for Adafruit Feather ESP32
@@ -13,7 +14,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 int statuss = 0;
 int out = 0;
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ400);
 
 byte neopix_gamma[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -40,7 +41,10 @@ void setup()
 
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
+  strip.clear();
   strip.show(); // Initialize all pixels to 'off'
+   
+
 
   //RFID
   SPI.begin();        // Initiate  SPI bus
@@ -49,6 +53,7 @@ void setup()
 
 void loop()
 {
+    
 
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent())
@@ -74,7 +79,7 @@ void loop()
   }
   content.toUpperCase();
   Serial.println();
-  if (content.substring(1) == "A4 E3 E6 1E") //change UID of the card that you want to give access
+  if (content.substring(1) == "D3 CE 07 1C") //change UID of the card that you want to give access
   {
     Serial.println(" Access Granted ");
     Serial.println(" Hallo Sabine Reitmaier ");
@@ -87,8 +92,12 @@ void loop()
     //colorWipe(strip.Color(0, 255, 0), 20); // Green
 
     //pulseGreenWhite(7);
-    delay(1000);
+    delay(100);
     startShow(0);
+    delay(50);
+    startShow(3);
+   
+  
   }
 
   else
@@ -101,7 +110,7 @@ void loop()
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait)
 {
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  for (uint16_t i = 1; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, c);
     strip.show();
@@ -118,13 +127,15 @@ void startShow(int i)
     colorWipe(strip.Color(0, 0, 0), 50); // Black/off
     break;
   case 1:
-    colorWipe(strip.Color(0, 255, 0), 20); // Green
+    colorWipe(strip.Color(0, 200, 18), 20); // Fresa Green 
     break;
   case 2:
     colorWipe(strip.Color(0, 0, 0, 255), 20); //White
     break;
-    // case 3: colorWipe(strip.Color(0, 255, 0), 20);
-    // break;
+  case 3: strip.setPixelColor(0, 0, 200, 18);
+    break;
+  case 4: strip.setPixelColor(0, 255, 0, 0);
+    break;
   }
   strip.show();
 }
@@ -135,7 +146,7 @@ void pulseGreenWhite(uint8_t wait)
   {
     for (uint16_t i = 0; i < strip.numPixels(); i++)
     {
-      strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
+      strip.setPixelColor(i, strip.Color(0, 200, 18, neopix_gamma[j]));
     }
     delay(wait);
     strip.show();
@@ -145,7 +156,7 @@ void pulseGreenWhite(uint8_t wait)
   {
     for (uint16_t i = 0; i < strip.numPixels(); i++)
     {
-      strip.setPixelColor(i, strip.Color(0, 255, 0, neopix_gamma[j]));
+      strip.setPixelColor(i, strip.Color(0, 200, 18, neopix_gamma[j]));
     }
     delay(wait + 15);
     strip.show();
@@ -161,6 +172,7 @@ void fullWhite()
   }
   strip.show();
 }
+
 
 //Color Variations
 //colorWipe(strip.Color(0, 0, 0, 255), 50); // White
