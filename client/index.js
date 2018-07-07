@@ -22,6 +22,12 @@ var io = require('socket.io')(http);
 var lastClick = 0;
 var delay = 1000;
 
+const PORT = process.env.PORT || 3000;
+
+http.listen(PORT, function () {
+  console.log(`listening on http://localhost:${PORT}`);
+});
+
 app.use(express.static('static'));
 
 app.get('/', function (req, res) {
@@ -101,9 +107,4 @@ io.on('connection', function (socket) {
     }
 
   })
-});
-
-
-http.listen(3001, function () {
-  console.log('listening on http://localhost:3001');
 });
