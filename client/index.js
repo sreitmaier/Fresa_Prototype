@@ -13,7 +13,7 @@ var options = {
   password: "yqVLDBTa3h1c"
 }
 
-var smsTest = true;
+var smsTest = false;
 
 var express = require('express');
 var app = express();
