@@ -22,6 +22,8 @@ var io = require('socket.io')(http);
 var lastClick = 0;
 var delay = 1000;
 
+var disconnect = false;
+
 const PORT = process.env.PORT || 3000;
 
 http.listen(PORT, function () {
@@ -52,6 +54,7 @@ io.on('connection', function (socket) {
   // })
   socket.on('disconnect', function () {
     console.log('user disconnected');
+    disconnect = true;
   });
 
   socket.on('open lock', function (msg) {
@@ -62,49 +65,50 @@ io.on('connection', function (socket) {
     client.publish(data.topic, data.message)
   })
 
-  client.on('message', function (topic, message) {
-    // message is Buffer
-    // console.log(message.toString())
-    // console.log(topic.toString())
+  if (!disconnect) {
 
-    // get Number from Topic
-    var slashReg = new RegExp("([^\/]+$)")
-    var num = slashReg.exec(topic);
-    num = num[0]
+    client.on('message', function (topic, message) {
+      // message is Buffer
+      // console.log(message.toString())
+      // console.log(topic.toString())
 
-    file.features[num].properties.status = message.toString();
-    if (lastClick >= (Date.now() - delay)) {
-      return;
-    }
-    lastClick = Date.now();
+      // get Number from Topic
+      var slashReg = new RegExp("([^\/]+$)")
+      var num = slashReg.exec(topic);
+      num = num[0]
 
-
-    fs.writeFile(fileName, JSON.stringify(file), function (err) {
-      if (err) return console.log(err);
-      console.log(JSON.stringify(file));
-      console.log('writing to ' + fileName);
-    });
-
-    socket.emit('message', {
-      topic: topic.toString(),
-      message: message.toString()
-    })
-
-
-
-    if (message.toString() == "loaded") {
-      if (smsTest) {
-        c.Messages.send({
-          text: 'Deine Bestellung wartet nun in deiner Speisekammer auf dich. Viel Spass beim Kochen.',
-          phones: '491733030149',
-          from: "Fresa"
-        }, function (err, res) {
-          console.log('Messages.send()', err, res);
-        });
-      } else if (!smsTest) {
-        console.log("sms sent");
+      file.features[num].properties.status = message.toString();
+      if (lastClick >= (Date.now() - delay)) {
+        return;
       }
-    }
+      lastClick = Date.now();
 
-  })
+
+      fs.writeFile(fileName, JSON.stringify(file), function (err) {
+        if (err) return console.log(err);
+        console.log(JSON.stringify(file));
+        console.log('writing to ' + fileName);
+      });
+
+      socket.emit('message', {
+        topic: topic.toString(),
+        message: message.toString()
+      })
+
+      if (message.toString() == "loaded") {
+        if (smsTest) {
+          c.Messages.send({
+            text: 'Deine Bestellung wartet nun in deiner Speisekammer auf dich. Viel Spass beim Kochen.',
+            phones: '491733030149',
+            from: "Fresa"
+          }, function (err, res) {
+            console.log('Messages.send()', err, res);
+          });
+        } else if (!smsTest) {
+          console.log("sms sent");
+        }
+      }
+
+    })
+  }
 });
