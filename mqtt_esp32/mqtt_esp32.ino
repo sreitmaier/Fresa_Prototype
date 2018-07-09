@@ -5,7 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define PIN 14
-#define NUM_LEDS 20
+#define NUM_LEDS 19
 #define BRIGHTNESS 50
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
@@ -150,13 +150,25 @@ void callback(char *topic, byte *payload, unsigned int length)
 
   if (previousState == "disconnect" && !disconnect)
   {
+    // mqttMsg("open");
     currentState = "open";
     previousState = "loaded";
     disconnect = true;
+    mqttMsg("open");
+    startShow(4);
   }
   else if (message == "disconnect" && disconnect)
   {
+    // currentState = "open";
+    // previousState = "loaded";
+    // mqttMsg("open");
     return;
+  }
+  else if (message == "open" && disconnect)
+  {
+    currentState = "open";
+    previousState = "loaded";
+    startShow(4);
   }
   else
   {
@@ -189,12 +201,12 @@ void reconnect()
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str(), user, pass, willTopic, 2, 1, willMsg))
+    if (client.connect(clientId.c_str(), user, pass))
     {
       Serial.println("connected");
       // ... and resubscribe
       client.subscribe(fresaClient);
-      mqttMsg("open");
+      // mqttMsg("open");
     }
     else
     {
@@ -250,7 +262,7 @@ void rfid()
 // Fill the dots one after the other with a color, leave the first LED for showing the state
 void colorWipe(uint32_t c, uint8_t wait)
 {
-  for (uint16_t i = 0; i < strip.numPixels() - 1; i++)
+  for (uint16_t i = 1; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, c);
     strip.show();
@@ -275,7 +287,6 @@ void startShow(int i)
   case 3:
     colorWipe(strip.Color(0, 0, 255), 20); // Blue
     break;
-
   case 4:
     strip.setPixelColor(0, 0, 200, 18); //Single Fresa
     break;
@@ -286,7 +297,7 @@ void startShow(int i)
     strip.setPixelColor(0, 0, 0, 255); //Single Blue
     break;
   case 7:
-    strip.setPixelColor(0, 40, 0, 40); //Single Violet
+    strip.setPixelColor(0, 50, 0, 50); //Single Violet
     break;
   }
   strip.show();
@@ -324,7 +335,7 @@ void loop()
   }
   client.loop();
 
-  if (currentState == "loaded" || currentState == "open")
+  if (currentState == "loaded" || currentState == "open" || currentState == "empty loaded" || currentState == "reserved")
   {
     rfid();
   }
@@ -344,20 +355,24 @@ void loop()
     // send OPEN message to mqtt server
     mqttMsg("loaded");
     startShow(0);
+    startShow(6);
   }
   else if (lock_state == LOW && !sent && currentState == "open" && (previousState == "loaded" || previousState == "open lock" || previousState == "empty loaded") && !startup)
   {
     mqttMsg("empty loaded");
     startShow(0);
+    startShow(7);
   }
   else if (lock_state == LOW && !sent && (currentState == "loaded" || currentState == "empty loaded" || currentState == "open lock"))
   {
     mqttMsg("open");
     startShow(0);
+    startShow(4);
   }
   else if (lock_state == LOW && !sent && currentState == "empty loaded" && previousState == "open")
   {
     mqttMsg("open");
     startShow(0);
+    startShow(4);
   }
 }

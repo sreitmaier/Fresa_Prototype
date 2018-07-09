@@ -20,7 +20,7 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var lastClick = 0;
-var delay = 1000;
+var delay = 2000;
 
 var disconnect = false;
 
@@ -45,7 +45,7 @@ app.get('/qr', function (req, res) {
 io.on('connection', function (socket) {
   var client = mqtt.connect(host, options)
   client.on('connect', function () {
-    client.subscribe('#')
+    client.subscribe('mini/0')
   })
   // socket.on('send message', function (data) {
 
@@ -73,16 +73,24 @@ io.on('connection', function (socket) {
       // console.log(topic.toString())
 
       // get Number from Topic
+
+      if (lastClick >= (Date.now() - delay)) {
+        return;
+      }
+
+      console.log({
+        lastClick: lastClick,
+        date: Date.now(),
+        delay: delay,
+        diff: (Date.now() - delay),
+        triggering: lastClick >= (Date.now() - delay)
+      })
+
       var slashReg = new RegExp("([^\/]+$)")
       var num = slashReg.exec(topic);
       num = num[0]
 
       file.features[num].properties.status = message.toString();
-      if (lastClick >= (Date.now() - delay)) {
-        return;
-      }
-      lastClick = Date.now();
-
 
       fs.writeFile(fileName, JSON.stringify(file), function (err) {
         if (err) return console.log(err);
@@ -104,11 +112,13 @@ io.on('connection', function (socket) {
           }, function (err, res) {
             console.log('Messages.send()', err, res);
           });
-        } else if (!smsTest) {
+        } else {
           console.log("sms sent");
         }
       }
 
-    })
+      lastClick = Date.now();
+
+    });
   }
 });

@@ -3,12 +3,16 @@
         {
             "name": "Mac",
             "includePath": [
+                "/Users/jan/Documents/Arduino/hardware/espressif/esp32/cores/esp32",
+                "/Users/jan/Library/Arduino15/packages/esp8266/hardware/esp8266/2.4.1/cores/esp8266",
                 "/Users/janmeininghaus/Documents/Arduino/hardware/espressif/esp32/cores/esp32",
                 "/Users/janmeininghaus/Library/Arduino15/packages/esp8266/hardware/esp8266/2.4.1/cores/esp8266"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": false,
                 "path": [
+                    "/Users/jan/Documents/Arduino/hardware/espressif/esp32/cores/esp32",
+                    "/Users/jan/Library/Arduino15/packages/esp8266/hardware/esp8266/2.4.1/cores/esp8266",
                     "/Users/janmeininghaus/Documents/Arduino/hardware/espressif/esp32/cores/esp32",
                     "/Users/janmeininghaus/Library/Arduino15/packages/esp8266/hardware/esp8266/2.4.1/cores/esp8266"
                 ]

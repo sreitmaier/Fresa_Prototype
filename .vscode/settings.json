@@ -8,6 +8,7 @@
     "rope": "cpp",
     "fstream": "cpp",
     "locale": "cpp",
-    "*.ipp": "cpp"
+    "*.ipp": "cpp",
+    "*.tcc": "cpp"
   }
 }
