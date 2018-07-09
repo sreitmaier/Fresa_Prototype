@@ -194,6 +194,7 @@ void reconnect()
       Serial.println("connected");
       // ... and resubscribe
       client.subscribe(fresaClient);
+      mqttMsg("open");
     }
     else
     {
