@@ -13,7 +13,7 @@ var options = {
   password: "yqVLDBTa3h1c"
 }
 
-var smsTest = false;
+var smsTest = true;
 
 var express = require('express');
 var app = express();
@@ -78,14 +78,6 @@ io.on('connection', function (socket) {
         return;
       }
 
-      console.log({
-        lastClick: lastClick,
-        date: Date.now(),
-        delay: delay,
-        diff: (Date.now() - delay),
-        triggering: lastClick >= (Date.now() - delay)
-      })
-
       var slashReg = new RegExp("([^\/]+$)")
       var num = slashReg.exec(topic);
       num = num[0]
@@ -106,7 +98,7 @@ io.on('connection', function (socket) {
       if (message.toString() == "loaded") {
         if (smsTest) {
           c.Messages.send({
-            text: 'Deine Bestellung wartet nun in deiner Speisekammer auf dich. Viel Spass beim Kochen.',
+            text: 'Dein Obst und Gemüse wartet auf dich in deiner ausgewählten Speisekammer. Viel Spass beim Kochen. Bis zum nächsten Mal.',
             phones: '491733030149',
             from: "Fresa"
           }, function (err, res) {
@@ -116,9 +108,7 @@ io.on('connection', function (socket) {
           console.log("sms sent");
         }
       }
-
       lastClick = Date.now();
-
     });
   }
 });
