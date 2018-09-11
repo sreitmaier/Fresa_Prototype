@@ -59,3 +59,5 @@ The QR-Codes content is a simple link to a webpage. This an example for local de
 
 This URL also includes som Querys which is needed to identify the type and the ID of the station.
 In future releases this can be requested with a random id which then receives the data of an database.
+
+The prototype is partly hosted on https://fresa-delivery.herokuapp.com/. 
